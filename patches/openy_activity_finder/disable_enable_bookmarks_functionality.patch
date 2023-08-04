@@ -1,0 +1,183 @@
+diff --git a/openy_activity_finder.module b/openy_activity_finder.module
+index da3e5ae..456da84 100644
+--- a/openy_activity_finder.module
++++ b/openy_activity_finder.module
+@@ -82,6 +82,7 @@ function openy_activity_finder_theme() {
+         'legacy_mode' => FALSE,
+         'weeks_filter' => FALSE,
+         'hide_home_branch_block' => FALSE,
++        'disable_activity_bookmark' => FALSE,
+         'background_image' => [],
+         'bs_version' => NULL,
+       ],
+diff --git a/openy_af4_vue_app/src/App.vue b/openy_af4_vue_app/src/App.vue
+index 0e42a48..b67aabe 100644
+--- a/openy_af4_vue_app/src/App.vue
++++ b/openy_af4_vue_app/src/App.vue
+@@ -160,6 +160,7 @@
+       :disable-spots-available="disableSpotsAvailable"
+       :request-more-info="daxko"
+       :bs-version="bsVersion"
++      :disable-activity-bookmark="disableActivityBookmark"
+       @startOver="startOver()"
+       @addItem="addItem($event)"
+       @removeItem="removeItem($event)"
+@@ -376,6 +377,10 @@ export default {
+     bsVersion: {
+       type: Number,
+       required: true
++    },
++    disableActivityBookmark: {
++      type: Boolean,
++      required: true
+     }
+   },
+   data() {
+diff --git a/openy_af4_vue_app/src/components/Results.vue b/openy_af4_vue_app/src/components/Results.vue
+index 4c091bc..d6555df 100644
+--- a/openy_af4_vue_app/src/components/Results.vue
++++ b/openy_af4_vue_app/src/components/Results.vue
+@@ -59,11 +59,12 @@
+             :legacy-mode="legacyMode"
+             :disable-spots-available="disableSpotsAvailable"
+             :request-more-info="requestMoreInfo"
++            :disable-activity-bookmark="disableActivityBookmark"
+             @bookmark="handleActivityDetailsBookmark($event)"
+             @unbookmark="handleActivityDetailsUnbookmark($event)"
+           />
+           <BookmarkedItemsModal
+-            v-if="!legacyMode"
++            v-if="!legacyMode && !disableActivityBookmark"
+             v-model="bookmarkedItemsModal.visible"
+             :cart-items="cartItems"
+             :ages="ages"
+@@ -77,8 +78,8 @@
+       </div>
+     </div>
+ 
+-    <BookmarkIcon v-if="!legacyMode" :counter="cartItems.length" @click="onBookmarkIconClick()" />
+-    <BookmarkFeatureModal v-if="!legacyMode" />
++    <BookmarkIcon v-if="!legacyMode && !disableActivityBookmark" :counter="cartItems.length" @click="onBookmarkIconClick()" />
++    <BookmarkFeatureModal v-if="!legacyMode && !disableActivityBookmark" />
+   </div>
+ </template>
+ 
+@@ -144,7 +145,11 @@ export default {
+     bsVersion: {
+       type: Number,
+       required: true
+-    }
++    },
++    disableActivityBookmark: {
++      type: Boolean,
++      required: true
++    },
+   },
+   data() {
+     return {
+diff --git a/openy_af4_vue_app/src/components/modals/ActivityDetails.vue b/openy_af4_vue_app/src/components/modals/ActivityDetails.vue
+index 2fde6f8..61047ba 100644
+--- a/openy_af4_vue_app/src/components/modals/ActivityDetails.vue
++++ b/openy_af4_vue_app/src/components/modals/ActivityDetails.vue
+@@ -108,7 +108,7 @@
+                     <i class="fa fa-external-link fa-external-link-alt"></i>
+                   </a>
+                   <a
+-                    v-if="!isBookmarked(age) && !legacyMode"
++                    v-if="!isBookmarked(age) && !legacyMode && !disableActivityBookmark"
+                     key="bookmark"
+                     role="button"
+                     class="bookmark"
+@@ -118,7 +118,7 @@
+                     <font-awesome-icon icon="bookmark" />
+                   </a>
+                   <a
+-                    v-else-if="!legacyMode"
++                    v-else-if="!legacyMode && !disableActivityBookmark"
+                     key="bookmark"
+                     role="button"
+                     class="bookmark bookmarked"
+@@ -139,7 +139,7 @@
+                     <i class="fa fa-redo fa-repeat"></i>
+                   </a>
+                   <a
+-                    v-if="!isBookmarked(age) && !legacyMode"
++                    v-if="!isBookmarked(age) && !legacyMode && !disableActivityBookmark"
+                     key="bookmark"
+                     role="button"
+                     class="bookmark"
+@@ -149,7 +149,7 @@
+                     <font-awesome-icon icon="bookmark" />
+                   </a>
+                   <a
+-                    v-else-if="!legacyMode"
++                    v-else-if="!legacyMode && !disableActivityBookmark"
+                     key="bookmark"
+                     role="button"
+                     class="bookmark bookmarked"
+@@ -226,7 +226,11 @@ export default {
+     requestMoreInfo: {
+       type: Boolean,
+       default: false
+-    }
++    },
++    disableActivityBookmark: {
++      type: Boolean,
++      required: true
++    },
+   },
+   data() {
+     return {
+diff --git a/src/Plugin/Block/ActivityFinder4Block.php b/src/Plugin/Block/ActivityFinder4Block.php
+index 8cb32d6..4fe4bcb 100644
+--- a/src/Plugin/Block/ActivityFinder4Block.php
++++ b/src/Plugin/Block/ActivityFinder4Block.php
+@@ -92,6 +92,7 @@ class ActivityFinder4Block extends BlockBase implements ContainerFactoryPluginIn
+       'legacy_mode' => 0,
+       'weeks_filter' => 0,
+       'hide_home_branch_block' => 0,
++      'disable_activity_bookmark' => 0,
+       'background_image' => NULL,
+     ];
+   }
+@@ -188,6 +189,7 @@ class ActivityFinder4Block extends BlockBase implements ContainerFactoryPluginIn
+       '#legacy_mode' => (bool) $conf['legacy_mode'],
+       '#weeks_filter' => (bool) $conf['weeks_filter'],
+       '#hide_home_branch_block' => (bool) $conf['hide_home_branch_block'],
++      '#disable_activity_bookmark' => (bool) $conf['disable_activity_bookmark'],
+       '#background_image' => [
+         'mobile' => $image_mobile,
+         'desktop' => $image_desktop,
+@@ -297,6 +299,12 @@ class ActivityFinder4Block extends BlockBase implements ContainerFactoryPluginIn
+       '#title' => $this->t('Hide Home Branch info block'),
+       '#default_value' => $conf['hide_home_branch_block'],
+     ];
++  
++    $form['disable_activity_bookmark'] = [
++      '#type' => 'checkbox',
++      '#title' => $this->t('Disable activity bookmark'),
++      '#default_value' => $conf['disable_activity_bookmark'],
++    ];
+ 
+     // Entity Browser element for background image.
+     $form['background_image'] = $this->getEntityBrowserForm(
+@@ -335,6 +343,7 @@ class ActivityFinder4Block extends BlockBase implements ContainerFactoryPluginIn
+     $this->configuration['legacy_mode'] = $form_state->getValue('legacy_mode');
+     $this->configuration['weeks_filter'] = $form_state->getValue('weeks_filter');
+     $this->configuration['hide_home_branch_block'] = $form_state->getValue('hide_home_branch_block');
++    $this->configuration['disable_activity_bookmark'] = $form_state->getValue('disable_activity_bookmark');
+     $this->configuration['background_image'] = $this->getEntityBrowserValue($form_state, 'background_image');
+   }
+ 
+diff --git a/templates/openy-activity-finder-4-block.html.twig b/templates/openy-activity-finder-4-block.html.twig
+index 6a715cc..8ea8664 100644
+--- a/templates/openy-activity-finder-4-block.html.twig
++++ b/templates/openy-activity-finder-4-block.html.twig
+@@ -63,6 +63,7 @@
+       :disable-search-box="{{ disable_search_box|json_encode }}"
+       :filters-section-config="{{ filters_section_config|json_encode }}"
+       :bs-version="{{ bs_version|json_encode }}"
++      :disable-activity-bookmark="{{ disable_activity_bookmark|json_encode }}"
+     ></activity-finder>
+   </div>
+ </div>

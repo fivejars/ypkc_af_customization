@@ -1,0 +1,194 @@
+diff --git a/openy_activity_finder.module b/openy_activity_finder.module
+index 0056acf..da3e5ae 100644
+--- a/openy_activity_finder.module
++++ b/openy_activity_finder.module
+@@ -76,6 +76,7 @@ function openy_activity_finder_theme() {
+         'relevance_sort_option' => '',
+         'filters_section_config' => [],
+         'limit_by_category' => [],
++        'limit_by_location' => [],
+         'exclude_by_category' => [],
+         'exclude_by_location' => [],
+         'legacy_mode' => FALSE,
+diff --git a/openy_af4_vue_app/src/App.vue b/openy_af4_vue_app/src/App.vue
+index f2c8b4d..853dea7 100644
+--- a/openy_af4_vue_app/src/App.vue
++++ b/openy_af4_vue_app/src/App.vue
+@@ -49,6 +49,7 @@
+           :daxko="daxko"
+           :bs-version="bsVersion"
+           :limit-by-category="limitByCategory"
++          :limit-by-location="limitByLocation"
+           :exclude-by-category="excludeByCategory"
+           :exclude-by-location="excludeByLocation"
+           @filterChange="onFilterChange($event, hideModal)"
+@@ -153,6 +154,8 @@
+       :selected-ages="selectedAges"
+       :is-loading-data="isLoadingData"
+       :cart-items="cartItems"
++      :limit-by-location="limitByLocation"
++      :limit-by-category="limitByCategory"
+       :legacy-mode="legacyMode"
+       :disable-spots-available="disableSpotsAvailable"
+       :request-more-info="daxko"
+@@ -188,6 +191,7 @@
+           :daxko="daxko"
+           :bs-version="bsVersion"
+           :limit-by-category="limitByCategory"
++          :limit-by-location="limitByLocation"
+           :exclude-by-category="excludeByCategory"
+           :exclude-by-location="excludeByLocation"
+           filters-mode="instant"
+@@ -328,6 +332,10 @@ export default {
+     limitByCategory: {
+       type: Array,
+       required: true
++     },
++    limitByLocation: {
++      type: Array,
++      required: true
+     },
+     excludeByCategory: {
+       type: Array,
+@@ -494,6 +502,16 @@ export default {
+         : data.defaults[key]
+     }
+ 
++    if (this.limitByLocation.length) {
++      data.clearFiltersSkip.push('locations')
++      data.defaults.selectedLocations = [this.limitByLocation]
++      data.defaults.step = 'results'
++    }
++    if (this.limitByCategory.length) {
++      data.defaults.selectedActivities = [this.limitByCategory];
++      data.defaults.step = 'results';
++    }
++
+     return data
+   },
+   computed: {
+diff --git a/openy_af4_vue_app/src/components/Results.vue b/openy_af4_vue_app/src/components/Results.vue
+index a139067..7512da8 100644
+--- a/openy_af4_vue_app/src/components/Results.vue
++++ b/openy_af4_vue_app/src/components/Results.vue
+@@ -30,7 +30,10 @@
+               <span class="results">
+                 {{ data.count | formatPlural('1 Result', '@count Results') }}
+               </span>
+-              | <a class="start-over" role="button" @click="startOver()">{{ 'Start Over' | t }}</a>
++              <span v-if="!limitByLocation && !limitByCategory">
++                |
++                <a class="start-over" role="button" @click="startOver()">{{ 'Start Over' | t }}</a>
++              </span>
+             </span>
+             <span>
+               <slot name="sort" />
+@@ -130,6 +133,14 @@ export default {
+       type: Boolean,
+       default: false
+     },
++    limitByLocation: {
++      type: Boolean,
++      default: false
++    },
++    limitByCategory: {
++      type: Boolean,
++      default: false
++    },
+     bsVersion: {
+       type: Number,
+       required: true
+diff --git a/openy_af4_vue_app/src/components/filters/Filters.vue b/openy_af4_vue_app/src/components/filters/Filters.vue
+index 97fa366..7488aac 100644
+--- a/openy_af4_vue_app/src/components/filters/Filters.vue
++++ b/openy_af4_vue_app/src/components/filters/Filters.vue
+@@ -47,6 +47,7 @@
+       </Fieldset>
+ 
+       <Fieldset
++        v-if="!limitByCategory.length"
+         :label="'Activities' | t"
+         :collapse-id="id + '-toggle-activities'"
+         :collapsed="fieldsetCollapseState('category')"
+@@ -65,6 +66,7 @@
+       </Fieldset>
+ 
+       <Fieldset
++        v-if="!limitByLocation.length"
+         :label="'Locations' | t"
+         :collapse-id="id + '-toggle-locations'"
+         :collapsed="fieldsetCollapseState('locations')"
+@@ -195,6 +197,10 @@ export default {
+       type: Boolean,
+       default: false
+     },
++    limitByLocation: {
++      type: Array,
++      required: true
++    },
+     limitByCategory: {
+       type: Array,
+       required: true
+diff --git a/src/Plugin/Block/ActivityFinder4Block.php b/src/Plugin/Block/ActivityFinder4Block.php
+index 5b1dcde..f28d4d8 100644
+--- a/src/Plugin/Block/ActivityFinder4Block.php
++++ b/src/Plugin/Block/ActivityFinder4Block.php
+@@ -86,6 +86,7 @@ class ActivityFinder4Block extends BlockBase implements ContainerFactoryPluginIn
+       'label_display' => 'visible',
+       'limit_by_category_daxko' => [],
+       'limit_by_category' => [],
++      'limit_by_location' => [],
+       'exclude_by_category' => [],
+       'exclude_by_location' => [],
+       'legacy_mode' => 0,
+@@ -181,6 +182,7 @@ class ActivityFinder4Block extends BlockBase implements ContainerFactoryPluginIn
+       '#relevance_sort_option' => 'search_api_relevance__DESC',
+       '#filters_section_config' => $backend->getFiltersSectionConfig(),
+       '#limit_by_category' => $limit_by_category,
++      '#limit_by_location' => $conf['limit_by_location'],
+       '#exclude_by_category' => $conf['exclude_by_category'],
+       '#exclude_by_location' => $conf['exclude_by_location'],
+       '#legacy_mode' => (bool) $conf['legacy_mode'],
+@@ -249,6 +251,12 @@ class ActivityFinder4Block extends BlockBase implements ContainerFactoryPluginIn
+         '#maxlength' => 2048,
+       ];
+ 
++      $form['limit_by_location'] = $base_by_location + [
++          '#title' => $this->t('Limit by locations'),
++          '#default_value' => $conf['limit_by_location']
++            ? $this->entityTypeManager->getStorage('node')->loadMultiple($conf['limit_by_location'])
++            : NULL,
++        ];
+       $form['exclude_by_location'] = $base_by_location + [
+           '#title' => $this->t('Exclude by location'),
+           '#default_value' => $conf['exclude_by_location']
+@@ -310,6 +318,9 @@ class ActivityFinder4Block extends BlockBase implements ContainerFactoryPluginIn
+    */
+   public function blockSubmit($form, FormStateInterface $form_state) {
+     $this->configuration['limit_by_category_daxko'] = $form_state->getValue('limit_by_category_daxko');
++    $this->configuration['limit_by_location'] = $form_state->getValue('limit_by_location')
++      ? array_column($form_state->getValue('limit_by_location'), 'target_id')
++      : [];
+     $this->configuration['limit_by_category'] = $form_state->getValue('limit_by_category')
+       ? array_column($form_state->getValue('limit_by_category'), 'target_id')
+       : [];
+diff --git a/templates/openy-activity-finder-4-block.html.twig b/templates/openy-activity-finder-4-block.html.twig
+index 2f1b29c..6a715cc 100644
+--- a/templates/openy-activity-finder-4-block.html.twig
++++ b/templates/openy-activity-finder-4-block.html.twig
+@@ -22,6 +22,7 @@
+  * - default_sort_option
+  * - relevance_sort_option
+  * - limit_by_category
++ * - limit_by_location
+  * - exclude_by_category
+  * - exclude_by_location
+  * - legacy_mode
+@@ -51,6 +52,7 @@
+       :default-sort-option="{{ default_sort_option|json_encode }}"
+       :relevance-sort-option="{{ relevance_sort_option|json_encode }}"
+       :limit-by-category="{{ limit_by_category|json_encode }}"
++      :limit-by-location="{{ limit_by_location|json_encode }}"
+       :exclude-by-location="{{ exclude_by_location|json_encode }}"
+       :exclude-by-category="{{ exclude_by_category|json_encode }}"
+       :legacy-mode="{{ legacy_mode|json_encode }}"

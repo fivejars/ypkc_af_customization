@@ -1,0 +1,15 @@
+diff --git a/openy_af4_vue_app/src/components/steps/SelectActivities.vue b/openy_af4_vue_app/src/components/steps/SelectActivities.vue
+index 4da6987..6aff421 100644
+--- a/openy_af4_vue_app/src/components/steps/SelectActivities.vue
++++ b/openy_af4_vue_app/src/components/steps/SelectActivities.vue
+@@ -123,6 +123,10 @@ export default {
+           if (this.limitByCategory.length) {
+             r = this.limitByCategory.includes(item.value.toString())
+           }
++          // If we don't have values to filter, just show all activities.
++          if (!this.excludeByCategory.length && !this.limitByCategory.length) {
++            r = true
++          }
+           return r
+         })
+         // If there are no filtered values then the activityGroup is empty,

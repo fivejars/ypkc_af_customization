@@ -1,0 +1,73 @@
+diff --git a/openy_af4_vue_app/src/components/ResultsList.vue b/openy_af4_vue_app/src/components/ResultsList.vue
+index 775e40f..fa76ca9 100644
+--- a/openy_af4_vue_app/src/components/ResultsList.vue
++++ b/openy_af4_vue_app/src/components/ResultsList.vue
+@@ -61,7 +61,15 @@
+         <div v-if="item.location" class="item-detail">
+           <i class="fa fa-map-marker"></i>
+           <span>
+-            <span class="info">{{ item.location }}</span>
++            <a
++              v-if="item.location_info.page_url"
++              class="info"
++              :href="item.location_info.page_url"
++              @click.stop
++            >
++              {{ item.location }}
++            </a>
++            <span v-else class="info">{{ item.location }}</span>
+             <br />
+             <span v-if="item.roomName" class="details">{{ item.roomName }}</span>
+           </span>
+@@ -127,7 +135,15 @@
+             <div v-if="item.location" class="item-detail">
+               <i class="fa fa-map-marker"></i>
+               <span>
+-                <span class="info">{{ item.location }}</span>
++                <a
++                  v-if="item.location_info.page_url"
++                  class="info"
++                  :href="item.location_info.page_url"
++                  @click.stop
++                >
++                  {{ item.location }}
++                </a>
++                <span v-else class="info">{{ item.location }}</span>
+                 <br />
+                 <span v-if="item.roomName" class="details">{{ item.roomName }}</span>
+               </span>
+diff --git a/openy_af4_vue_app/src/components/modals/ActivityDetails.vue b/openy_af4_vue_app/src/components/modals/ActivityDetails.vue
+index 27efe3a..b2133d6 100644
+--- a/openy_af4_vue_app/src/components/modals/ActivityDetails.vue
++++ b/openy_af4_vue_app/src/components/modals/ActivityDetails.vue
+@@ -62,7 +62,15 @@
+                 <div v-if="item.location" class="item-detail">
+                   <i class="fa fa-map-marker"></i>
+                   <span>
+-                    <span class="info">{{ item.location }}</span>
++                    <a
++                      v-if="item.location_info.page_url"
++                      class="info"
++                      :href="item.location_info.page_url"
++                      @click.stop
++                    >
++                      {{ item.location }}
++                    </a>
++                    <span v-else class="info">{{ item.location }}</span>
+                     <br />
+                     <span v-if="item.roomName" class="details">{{ item.roomName }}</span>
+                   </span>
+diff --git a/src/OpenyActivityFinderSolrBackend.php b/src/OpenyActivityFinderSolrBackend.php
+index f6b8d56..07e93c0 100644
+--- a/src/OpenyActivityFinderSolrBackend.php
++++ b/src/OpenyActivityFinderSolrBackend.php
+@@ -698,7 +698,8 @@ class OpenyActivityFinderSolrBackend extends OpenyActivityFinderBackend {
+               'email' => $location->field_location_email->value,
+               'nid' => $location->id(),
+               'phone' => $location->field_location_phone->value,
+-              'title' => $location->label()
++              'title' => $location->label(),
++              'page_url' => $location->toUrl()->toString(),
+             ];
+           }
+         }

@@ -1,0 +1,13 @@
+diff --git a/openy_activity_finder.install b/openy_activity_finder.install
+index fa24da1..0c6b211 100644
+--- a/openy_activity_finder.install
++++ b/openy_activity_finder.install
+@@ -237,7 +237,7 @@ function openy_activity_finder_update_8403() {
+  * Update configs for search index.
+  */
+ function openy_activity_finder_update_8404() {
+-  _af_config_import();
++//  _af_config_import();
+ }
+
+ /**

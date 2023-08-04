@@ -1,0 +1,13 @@
+diff --git a/openy_af4_vue_app/src/App.vue b/openy_af4_vue_app/src/App.vue
+index e63d4ee..0f67643 100644
+--- a/openy_af4_vue_app/src/App.vue
++++ b/openy_af4_vue_app/src/App.vue
+@@ -368,7 +368,7 @@ export default {
+         }
+       ],
+       selectedPath: '',
+-      maxAges: 2,
++      maxAges: 5,
+       defaults: {
+         step: 'selectPath',
+         selectedAges: [],

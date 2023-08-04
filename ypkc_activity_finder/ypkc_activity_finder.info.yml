@@ -1,0 +1,5 @@
+name: YPKC Activity finder
+type: module
+description: 'Provides Activity finder related customization'
+package: YPKC
+core_version_requirement: ^8.8 || ^9

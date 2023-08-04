@@ -1,0 +1,20 @@
+<?php
+
+/**
+ * @file
+ * Provides Activity Finder customizations.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Alter activity finder block form.
+ */
+function ypkc_activity_finder_activity_finder_form_alter(&$form, FormStateInterface $form_state) {
+  if (isset($form['exclude_by_category']) && isset($form['exclude_by_location'])) {
+    hide($form['exclude_by_category']);
+    hide($form['exclude_by_location']);
+    hide($form['weeks_filter']);
+    hide($form['hide_home_branch_block']);
+  }
+}

@@ -1,0 +1,38 @@
+diff --git a/src/Plugin/search_api/processor/AgesMinMax.php b/src/Plugin/search_api/processor/AgesMinMax.php
+index 94e3a07..e93eac9 100644
+--- a/src/Plugin/search_api/processor/AgesMinMax.php
++++ b/src/Plugin/search_api/processor/AgesMinMax.php
+@@ -149,9 +149,30 @@ class AgesMinMax extends ProcessorPluginBase {
+     // Get only count of months.
+     $ages = array_column($ages, 'value');
+
+-    return array_values(array_filter($ages, function($value) use ($min_age, $max_age) {
+-      return $value >= $min_age && $value <= $max_age;
+-    }));
++    $new_min_age = $this->getClosest($ages, $min_age);
++    $new_max_age = $this->getClosest($ages, $max_age);
++
++    return $new_min_age && $new_max_age
++      ? range($new_min_age, $new_max_age, 6)
++      : range($min_age, $max_age, 6);
++  }
++
++  /**
++   * Find the closest values from ages array.
++   *
++   * @param array $arr
++   *   The array in that we search.
++   * @param int $value
++   *   The value for that we search the closest value.
++   *
++   * @return mixed|null
++   *   The closest value.
++   */
++  private function getClosest(array $arr, int $value) {
++    usort($arr, function ($a, $b) use ($value) {
++      return abs($a - $value) - abs($b - $value);
++    });
++    return array_shift($arr);
+   }
+
+ }

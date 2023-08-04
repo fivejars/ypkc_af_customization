@@ -1,0 +1,71 @@
+diff --git a/openy_af4_vue_app/src/components/Fieldset.vue b/openy_af4_vue_app/src/components/Fieldset.vue
+index 31260ae..b92731d 100644
+--- a/openy_af4_vue_app/src/components/Fieldset.vue
++++ b/openy_af4_vue_app/src/components/Fieldset.vue
+@@ -115,7 +115,8 @@ export default {
+ 
+       @include media-breakpoint-up('lg') {
+         font-size: 14px;
+-        line-height: 50px;
++        line-height: 25px;
++        padding: 12px 0;
+       }
+     }
+ 
+diff --git a/openy_af4_vue_app/src/components/NoResults.vue b/openy_af4_vue_app/src/components/NoResults.vue
+index aa2b31c..033891a 100644
+--- a/openy_af4_vue_app/src/components/NoResults.vue
++++ b/openy_af4_vue_app/src/components/NoResults.vue
+@@ -7,7 +7,7 @@
+         <h2>{{ 'Oh no!' | t }}</h2>
+         <p>{{ "We're sorry, but no results meet your search criteria." | t }}</p>
+         <p v-if="selectedDimensions >= 2">
+-          <strong>{{ 'What criteria is most important to you?' | t }}</strong>
++          <strong>{{ 'Continue browsing using one of the following criteria.' | t }}</strong>
+         </p>
+         <div v-if="selectedDimensions >= 2" class="actions">
+           <button
+diff --git a/openy_af4_vue_app/src/components/filters/Filters.vue b/openy_af4_vue_app/src/components/filters/Filters.vue
+index 7488aac..bc9a1bf 100644
+--- a/openy_af4_vue_app/src/components/filters/Filters.vue
++++ b/openy_af4_vue_app/src/components/filters/Filters.vue
+@@ -8,7 +8,7 @@
+     </div>
+     <div class="filters">
+       <Fieldset
+-        :label="'Schedules' | t"
++        :label="'Schedule Preferences' | t"
+         :collapse-id="id + '-toggle-schedules'"
+         :collapsed="fieldsetCollapseState('schedule')"
+         :counter="scheduleFiltersCount"
+@@ -48,7 +48,7 @@
+ 
+       <Fieldset
+         v-if="!limitByCategory.length"
+-        :label="'Activities' | t"
++        :label="'Programs and Classes' | t"
+         :collapse-id="id + '-toggle-activities'"
+         :collapsed="fieldsetCollapseState('category')"
+         :counter="activityFiltersCount"
+@@ -67,7 +67,7 @@
+ 
+       <Fieldset
+         v-if="!limitByLocation.length"
+-        :label="'Locations' | t"
++        :label="'Location Preferences' | t"
+         :collapse-id="id + '-toggle-locations'"
+         :collapsed="fieldsetCollapseState('locations')"
+         :counter="locationFiltersCount"
+diff --git a/src/Plugin/Block/ActivityFinder4Block.php b/src/Plugin/Block/ActivityFinder4Block.php
+index f28d4d8..8cb32d6 100644
+--- a/src/Plugin/Block/ActivityFinder4Block.php
++++ b/src/Plugin/Block/ActivityFinder4Block.php
+@@ -309,6 +309,8 @@ class ActivityFinder4Block extends BlockBase implements ContainerFactoryPluginIn
+     $form['background_image']['#type'] = 'details';
+     $form['background_image']['#title'] = $this->t('Background image');
+     $form['background_image']['#open'] = TRUE;
++  
++    \Drupal::moduleHandler()->alter('activity_finder_form', $form, $form_state);
+ 
+     return $form;
+   }

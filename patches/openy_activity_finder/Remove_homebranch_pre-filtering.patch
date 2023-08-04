@@ -1,0 +1,19 @@
+diff --git a/openy_af4_vue_app/src/App.vue b/openy_af4_vue_app/src/App.vue
+index 7035780..77180d4 100644
+--- a/openy_af4_vue_app/src/App.vue
++++ b/openy_af4_vue_app/src/App.vue
+@@ -832,14 +832,6 @@ export default {
+       this.searchKeywords = ''
+     },
+     getHomeBranchId() {
+-      const cookie = this.getCookie('home_branch')
+-      if (cookie !== '') {
+-        try {
+-          return JSON.parse(cookie).id
+-        } catch (e) {
+-          return null
+-        }
+-      }
+       return null
+     },
+     getHomeBranchResultsCount() {

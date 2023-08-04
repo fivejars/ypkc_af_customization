@@ -1,0 +1,24 @@
+services:
+  ypkc_activity_finder.solr_backend:
+    class: Drupal\ypkc_activity_finder\YpkcActivityFinderSolrBackend
+    decorates: openy_activity_finder.solr_backend
+    public: false
+    arguments:
+      - '@config.factory'
+      - '@cache.activity_finder'
+      - '@database'
+      - '@entity_type.manager'
+      - '@date.formatter'
+      - '@datetime.time'
+      - '@logger.channel.default'
+      - '@module_handler'
+  ypkc_activity_finder.route_subscriber:
+    class: Drupal\ypkc_activity_finder\Routing\RouteSubscriber
+    tags:
+      - { name: event_subscriber }
+  cache.activity_finder:
+    class: Drupal\Core\Cache\CacheBackendInterface
+    tags:
+      - { name: cache.bin, default_backend: cache.backend.chainedfast }
+    factory: ['@cache_factory', 'get']
+    arguments: [activity_finder]
